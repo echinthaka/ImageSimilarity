@@ -4,21 +4,20 @@ import com.chinthaka.imagesimilarity.common.FileHandlingService
 import com.chinthaka.imagesimilarity.constants.DataStorageServiceConstants
 import com.chinthaka.imagesimilarity.storage.FileBasedStorage
 import org.scalatra.{BadRequest, Ok}
+import org.slf4j.{LoggerFactory, Logger}
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 class DataStorageService extends FileHandlingService {
 
+  val logger: Logger = LoggerFactory.getLogger(this.getClass)
   val imageStoreService = new FileBasedStorage
 
   post("/") {
               fileParams.get(DataStorageServiceConstants.InputFileParamName) match {
                 case Some(inputFile) => {
-                  println("Got an image for image store service")
+                  logger.info("Got an image for image store service")
                   val id = imageStoreService.store(inputFile.get())
-
-
-
                   Ok(Map("id" -> id).toJson)
                 }
 

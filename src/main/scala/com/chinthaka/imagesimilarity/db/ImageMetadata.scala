@@ -10,7 +10,7 @@ case class ImageMetadata(uuid: String,
 }
 
 object ImageMetadata {
-  val Schema = "testschema33063"
+  val Schema = "images"
   val Table = "metadata"
   val UUID = "uuid"
   val LowResHist = "low_res_hist"

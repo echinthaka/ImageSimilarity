@@ -1,9 +1,9 @@
 package com.chinthaka.imagesimilarity.db
 
 import java.sql.{ResultSet, Statement, PreparedStatement, DriverManager, Connection}
+import java.util.logging.Logger
 
 import com.chinthaka.imagesimilarity.util.GlobalContext
-import org.slf4j.{LoggerFactory, Logger}
 
 /**
  * @author - Eran Withana (eran.chinthaka@gmail.com)
@@ -11,7 +11,7 @@ import org.slf4j.{LoggerFactory, Logger}
 
 object DBManager {
 
-  val logger: Logger = LoggerFactory.getLogger(this.getClass)
+  val logger: Logger = Logger.getLogger(this.getClass.getName)
 
   val DBHostName = GlobalContext.config.getString("app.db.hostname")
   val DBPort = GlobalContext.config.getInt("app.db.port")
@@ -19,13 +19,14 @@ object DBManager {
   val DBUsername = GlobalContext.config.getString("app.db.username")
   val DBPassword = GlobalContext.config.getString("app.db.password")
 
-  logger.info(s"DB Parameters $DBUsername@${DBHostName}:${DBPort}/$DBName")
-
   def getConnection(jdbcURL: String = s"jdbc:postgresql://$DBHostName:$DBPort/$DBName",
                     dbUsername: String = DBUsername,
                     dbPassword: String = DBPassword,
                     timeout: Int = 1, // timeout in seconds
                     maxRetries: Int = 3): Option[Connection] = {
+
+    logger.info(s"DB Parameters $DBUsername@${DBHostName}:${DBPort}/$DBName")
+    
     try {
 
       val c = Iterator
@@ -68,7 +69,7 @@ object DBManager {
         connection.close()
       }
       case _ => {
-        logger.warn("Couldn't get a connection to the database")
+        logger.severe("Couldn't get a connection to the database")
 
       }
     }
@@ -92,7 +93,7 @@ object DBManager {
         Option(imageMetaData)
       }
       case _ => {
-        logger.warn("Couldn't get a connection to the database")
+        logger.severe("Couldn't get a connection to the database")
         None
       }
     }
