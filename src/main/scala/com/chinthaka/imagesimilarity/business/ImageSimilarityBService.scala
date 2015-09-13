@@ -20,7 +20,7 @@ class ImageSimilarityBService extends FileHandlingService {
 
   val logger: Logger = Logger.getLogger(this.getClass.getName)
 
-  def displayPage(content: Seq[Node]) = Template.page("Cape Image Similarity Service", content, url(_))
+  def displayPage(content: Seq[Node]) = Template.page("Image Similarity Service", content, url(_))
 
   def makeFinalImage(baseImageId: String, firstSimilarImage: String, secondSimilarImage: String, thirdSimilarImage: String): Seq[Node] = {
     <p>Uploaded Image</p>

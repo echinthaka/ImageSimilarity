@@ -34,9 +34,7 @@ class ImageService extends FileHandlingService {
                     logger.info("[ImageService] Got an image for image service. First storing it")
                     // Store the image using data storage service
                     // TOOD: Fix localhost:8080 and get it either from storage service or request
-                    val imageStorageResponse = Http(s"http://$hostName:$serverPort${DataStorageServiceConstants.HTTPPath}")
-                                               .postMulti(MultiPart(DataStorageServiceConstants.InputFileParamName,
-                                                                    "image.png", "image/png", inputFile.get)).asString
+                    val imageStorageResponse = Http(s"http://$hostName:$serverPort${DataStorageServiceConstants.HTTPPath}").postMulti(MultiPart(DataStorageServiceConstants.InputFileParamName,"image.png", "image/png", inputFile.get)).asString
 
                     if (imageStorageResponse.is2xx) {
 
@@ -46,6 +44,7 @@ class ImageService extends FileHandlingService {
                       // save file locally and calculate histograms
                       val imageFile: File = new File("/tmp", s"${id}.png")
                       FileUtils.saveToFile(inputFile.get(), imageFile)
+                      logger.info(s"File saved locally to calculate histogram => ${imageFile.getAbsolutePath}")
 
                       // calculate two histograms
                       val (lowResHist, highResHist) = ImageManager.calculateHistograms(imageFile.getAbsolutePath)

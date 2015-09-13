@@ -12,7 +12,7 @@ object ImageSimilarityServiceBuild extends Build {
   val ScalatraVersion = "2.4.0.M3"
 
   lazy val project = Project (
-    "capeimageservice",
+    "ImageSimilarityServiceBuild",
     file("."),
     settings = ScalatraPlugin.scalatraSettings ++ scalateSettings ++ Seq(
       organization := Organization,
