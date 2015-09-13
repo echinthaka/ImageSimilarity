@@ -13,7 +13,7 @@ object JettyServer {
 
     val port = GlobalContext.config.getInt("app.server.port")
 
-    if (args.length > 1) {
+    if (args.length > 0) {
       GlobalContext.hostName = args(0)
     }
 

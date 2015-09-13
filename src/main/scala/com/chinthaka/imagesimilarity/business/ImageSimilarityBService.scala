@@ -40,8 +40,9 @@ class ImageSimilarityBService extends FileHandlingService {
    * TODO: move the display page into a template inside WEB-INF
    */
   get("/") {
+             val businessService = s"http://$hostName:$serverPort/business"
              displayPage(
-                          <form action={url(s"http://$hostName:$serverPort/business")} method="post" enctype="multipart/form-data">
+                          <form action={businessService} method="post" enctype="multipart/form-data">
                             <p>File to upload:
                               <input type="file" name="file"/>
                             </p>
