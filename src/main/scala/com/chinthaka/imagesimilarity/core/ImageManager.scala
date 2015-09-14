@@ -17,12 +17,21 @@ object ImageManager {
   def calculateHistograms(fileLocation: String, flags: Int = CV_LOAD_IMAGE_COLOR): (String, String) = {
 
     logger.info(s"Calculating histogram for $fileLocation")
-    val image = imread(fileLocation, flags)
-    val lowResHist = new Histogram1D(16).getHistogramAsArray(image)
 
-    val highRestHist = new Histogram1D(256).getHistogramAsArray(image)
+    try {
+      val image = imread(fileLocation, flags)
+      val lowResHist = new Histogram1D(16).getHistogramAsArray(image)
 
-    (lowResHist.mkString(","), highRestHist.mkString(","))
+      val highRestHist = new Histogram1D(256).getHistogramAsArray(image)
+
+      (lowResHist.mkString(","), highRestHist.mkString(","))
+    } catch {
+      case e: Exception => {
+        logger.severe("Exception occurred")
+        e.printStackTrace
+        throw e
+      }
+    }
 
   }
 
