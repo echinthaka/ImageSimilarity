@@ -1,7 +1,3 @@
-import AssemblyKeys._
-
-assemblySettings
-
 jarName in assembly := "imageservice.jar"
 
 test in assembly := {}
