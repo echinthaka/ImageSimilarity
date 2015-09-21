@@ -55,7 +55,6 @@ if needed.
 - Java 1.7 or later
 - Scala 2.10.4 or later
 - SBT 0.13.5
-- OpenCV 3.0.0 or later
 
 Java, Scala and SBT can be installed on an ubuntu based system using `scripts/install_deps.sh`.
 

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # add oracle java repo
 sudo apt-add-repository ppa:webupd8team/java
 
@@ -15,3 +16,8 @@ sudo apt-get install sbt=0.13.5
 # install scala
 sudo wget www.scala-lang.org/files/archive/scala-2.10.4.deb
 sudo dpkg -i scala-2.10.4.deb
+
+# install libstdc++ since javacv depends on its latest version
+sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+sudo apt-get update
+sudo apt-get install -y gcc libstdc++6

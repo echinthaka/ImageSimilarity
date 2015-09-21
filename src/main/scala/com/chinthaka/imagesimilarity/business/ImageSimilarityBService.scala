@@ -69,8 +69,10 @@ class ImageSimilarityBService extends FileHandlingService {
               fileParams.get("file") match {
                 case Some(file) => {
 
-                  logger.info("[ImageSimilarityBService] Reeived an image. Storing it in image store")
-                  val imageServiceResponse = Http(s"http://$hostName:$serverPort${ImageStoreServiceConstants.HTTPPath}")
+                  logger.info(s"[ImageSimilarityBService] Received an image. Storing it with image service [imageServiceURL]")
+                  val imageServiceURL: String = s"http://$hostName:$serverPort${ImageStoreServiceConstants.HTTPPath}"
+
+                  val imageServiceResponse = Http(imageServiceURL)
                                              .postMulti(MultiPart(ImageStoreServiceConstants.InputFileParamName,
                                                                   "image.png", "image/png", file.get)).asString
 
