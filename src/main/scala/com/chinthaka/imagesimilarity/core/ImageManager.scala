@@ -2,7 +2,7 @@ package com.chinthaka.imagesimilarity.core
 
 import java.util.logging.Logger
 
-import com.chinthaka.imagesimilarity.util.Histogram1D
+import com.chinthaka.imagesimilarity.util.{GlobalContext, Histogram1D}
 import org.bytedeco.javacpp.opencv_imgcodecs._
 import org.bytedeco.javacpp.opencv_core._
 
@@ -20,7 +20,7 @@ object ImageManager {
 
     try {
       val image = imread(fileLocation, flags)
-      val lowResHist = new Histogram1D(16).getHistogramAsArray(image)
+      val lowResHist = new Histogram1D(GlobalContext.numberOfBinsInHistogram).getHistogramAsArray(image)
 
       val highRestHist = new Histogram1D(256).getHistogramAsArray(image)
 

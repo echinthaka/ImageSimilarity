@@ -10,4 +10,5 @@ object GlobalContext {
   var hostName = "localhost"
   val config: Config = ConfigFactory.load
   val serverPort = config.getInt("app.server.port")
+  val numberOfBinsInHistogram = 16
 }

@@ -11,6 +11,7 @@ object JettyServer {
   // this is my entry object as specified in sbt project definition
   def main(args: Array[String]) {
 
+    println(System.getProperty("java.library.path"))
     val port = GlobalContext.config.getInt("app.server.port")
 
     if (args.length > 0) {

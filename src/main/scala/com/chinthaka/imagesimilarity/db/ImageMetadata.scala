@@ -14,5 +14,6 @@ object ImageMetadata {
   val Table = "metadata"
   val UUID = "uuid"
   val LowResHist = "low_res_hist"
-  val highResHist = "high_res_hist"
+  val HighResHist = "high_res_hist"
+  val Timestamp = "timestamp"
 }

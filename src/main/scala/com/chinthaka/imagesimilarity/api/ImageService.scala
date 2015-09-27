@@ -8,13 +8,14 @@ import com.chinthaka.imagesimilarity.common.FileHandlingService
 import com.chinthaka.imagesimilarity.constants.DataStorageServiceConstants
 import com.chinthaka.imagesimilarity.constants.ImageStoreServiceConstants._
 import com.chinthaka.imagesimilarity.core.ImageManager
-import com.chinthaka.imagesimilarity.db.{ImageMetadata, DBManager}
+import com.chinthaka.imagesimilarity.db.{ImageMetadata, PostgresImageMetadataStorage}
+import com.chinthaka.imagesimilarity.search.ImageIndex
 import com.chinthaka.imagesimilarity.util.{GlobalContext, ImageComparator, FileUtils}
 import org.scalatra.{BadRequest, Ok, InternalServerError}
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 import com.chinthaka.imagesimilarity.util.GlobalContext._
-
+import com.chinthaka.imagesimilarity.storage.ImageMetadataStorage
 
 import spray.json.lenses.JsonLenses._
 
@@ -34,7 +35,9 @@ class ImageService extends FileHandlingService {
                     logger.info("[ImageService] Got an image for image service. First storing it")
                     // Store the image using data storage service
                     // TOOD: Fix localhost:8080 and get it either from storage service or request
-                    val imageStorageResponse = Http(s"http://$hostName:$serverPort${DataStorageServiceConstants.HTTPPath}").postMulti(MultiPart(DataStorageServiceConstants.InputFileParamName,"image.png", "image/png", inputFile.get)).asString
+                    val imageStorageResponse = Http(s"http://$hostName:$serverPort${DataStorageServiceConstants.HTTPPath}")
+                                               .postMulti(MultiPart(DataStorageServiceConstants.InputFileParamName, "image.png", "image/png", inputFile.get))
+                                               .asString
 
                     if (imageStorageResponse.is2xx) {
 
@@ -50,7 +53,9 @@ class ImageService extends FileHandlingService {
                       val (lowResHist, highResHist) = ImageManager.calculateHistograms(imageFile.getAbsolutePath)
                       logger.info(s"[ImageService] Histograms calculated for image $id")
 
-                      DBManager.insertImageMetadata(new ImageMetadata(id, lowResHist, highResHist))
+                      val newImageMetadata: ImageMetadata = new ImageMetadata(id, lowResHist, highResHist)
+                      ImageService.imageMetadataStorage.insertImageMetadata(newImageMetadata)
+                      ImageIndex.update(newImageMetadata)
                       logger.info(s"[ImageService] Image histogram data stored in DB for image $id")
 
                       Ok(Map("id" -> id).toJson)
@@ -62,6 +67,7 @@ class ImageService extends FileHandlingService {
                     }
                   } catch {
                     case exception: Exception => {
+                      exception.printStackTrace()
                       logger.warning(s"Exception occurred => $exception")
                       InternalServerError(reason = exception.getMessage)
                     }
@@ -116,55 +122,31 @@ class ImageService extends FileHandlingService {
                                                  logger.info(s"[ImageService] Looking for similar images for image $baseImageId. Retrieving image metadata")
 
                                                  // first retrieve image metadata for the base image
-                                                 val baseImageMetadataOption: Option[List[ImageMetadata]] = DBManager.retrieveImagesWithProperty(ImageMetadata
-                                                                                                                                                 .UUID,
-                                                                                                                                                 baseImageId)
-
+                                                 val baseImageMetadataOption: Option[List[ImageMetadata]] = ImageService.imageMetadataStorage
+                                                                                                            .retrieveImagesWithProperty(ImageMetadata.UUID,
+                                                                                                                                        baseImageId)
                                                  baseImageMetadataOption match {
                                                    case Some(baseImageMetaDataList) => {
                                                      val baseImageMetaData = baseImageMetaDataList.head
-                                                     DBManager.retrieveImagesWithProperty(ImageMetadata.LowResHist, baseImageMetaData.lowResHist,
-                                                                                          Some(ImageMetadata.UUID), Some(baseImageId)) match {
-                                                       case Some(similarImagesList) => {
-                                                         logger.info(s"[ImageService] Found ${similarImagesList.size} images that are similar at first level")
 
-                                                         // first see whether we have a perfect match at high res histogram
-                                                         val matchedImagesList = similarImagesList.filter(_.highResHist == baseImageMetaData.highResHist)
+                                                     val similarImages: Set[String] = ImageIndex.getSimilarImages(baseImageMetaData,
+                                                                                                                  NumberOfSimilarImagesToBeReturned)
+                                                     logger.info(s"[ImageService] Found ${similarImages.size} images that are similar to ${baseImageId}")
 
-                                                         val matchedImageIdsList: List[String] = if (matchedImagesList.size >
-                                                                                                     NumberOfSimilarImagesToBeReturned) {
-                                                           findBestMatchesWithHistogramEvaluation(baseImageId, matchedImagesList.map(_.uuid), 3)
-                                                         } else if (matchedImagesList.size < NumberOfSimilarImagesToBeReturned) {
-
-                                                           if (matchedImagesList.size == similarImagesList) {
-                                                             // sorry this is all we have
-                                                             matchedImagesList.map(_.uuid)
-                                                           } else {
-                                                             val itemsMatchingOnlyAtLowResLevel = similarImagesList.filterNot(matchedImagesList.toSet)
-                                                             matchedImagesList.map(_.uuid) ++ findBestMatchesWithHistogramEvaluation(baseImageId,
-                                                                                                                                     itemsMatchingOnlyAtLowResLevel
-                                                                                                                                     .map(_.uuid),
-                                                                                                                                     NumberOfSimilarImagesToBeReturned -
-                                                                                                                                     matchedImagesList.size)
-                                                           }
-                                                         } else {
-                                                           // we have exactly NumberOfSimilarImagesToBeReturned images matched
-                                                           matchedImagesList.map(_.uuid)
-                                                         }
-
-                                                         Ok(Map("similarImages" -> matchedImageIdsList.mkString(",")).toJson)
-
-                                                       }
-                                                       case _ => BadRequest(s"There are no similar images for the given image with id $baseImageId")
+                                                     if (similarImages.size > 0) {
+                                                       Ok(Map("similarImages" -> similarImages.mkString(",")).toJson)
+                                                     } else {
+                                                       BadRequest(s"There are no similar images for the given image with id $baseImageId")
                                                      }
                                                    }
+
                                                    case _ => BadRequest(s"Couldn't find an image with the given id $baseImageId")
                                                  }
-                                                 // find images with the same low res histogram
-
-
-                                                 // now find out whether we have perfect matches with high res hist
-
-
                                                }
+}
+
+object ImageService {
+  val imageMetadataStorage: ImageMetadataStorage = PostgresImageMetadataStorage
+  val initialImageMetadata: List[ImageMetadata] = imageMetadataStorage.retrieveNewImageMetadata
+  initialImageMetadata.map(ImageIndex.update)
 }
